@@ -64,7 +64,7 @@ func getDBContainer(ctx context.Context) (*DBContainer, error) {
 
 	err := ensureDockerTestNetwork(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting docker network: %w", err)
 	}
 	containerName := "forgejo_db"
 
@@ -267,7 +267,7 @@ func getForgejoContainer(ctx context.Context) (*ForgejoContainer, error) {
 func ensureDockerTestNetwork(ctx context.Context) error {
 	docker, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating docker client: %w", err)
 	}
 	defer docker.Close()
 
@@ -280,14 +280,14 @@ func ensureDockerTestNetwork(ctx context.Context) error {
 
 	// Anything else than not found is unexpected, return it
 	if !errdefs.IsNotFound(err) {
-		return err
+		return fmt.Errorf("error checking for docker network: %w", err)
 	}
 
 	_, err = docker.NetworkCreate(ctx, networkName, network.CreateOptions{
 		Driver: "bridge",
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating docker network: %w", err)
 	}
 
 	return nil
