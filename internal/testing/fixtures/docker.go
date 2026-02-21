@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -238,20 +237,15 @@ func getForgejoContainer(ctx context.Context) (*ForgejoContainer, error) {
 
 	_, f, _, _ := runtime.Caller(0)
 	appIniFile := filepath.Join(filepath.Dir(f), "app.ini")
-	// appIniRd, err := os.Open(appIniFile)
-	// if err != nil {
-	//     return nil, err
-	// }
 
 	c, err := testcontainers.Run(
 		ctx,
 		"codeberg.org/forgejo/forgejo:11",
 		testcontainers.CustomizeRequest(containerRequest),
 		testcontainers.WithFiles(testcontainers.ContainerFile{
-			// Reader: appIniRd,
-			HostFilePath: appIniFile,
-			ContainerFilePath:   "/data/gitea/conf/app.ini",
-			FileMode: 0o644,
+			HostFilePath:      appIniFile,
+			ContainerFilePath: "/data/gitea/conf/app.ini",
+			FileMode:          0o644,
 		}),
 		testcontainers.WithWaitStrategy(
 			wait.ForLog("Starting new Web server"),
