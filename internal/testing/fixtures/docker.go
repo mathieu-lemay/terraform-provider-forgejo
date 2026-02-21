@@ -258,7 +258,7 @@ func getForgejoContainer(ctx context.Context) (*ForgejoContainer, error) {
 		),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error starting db container: %w", err)
+		return nil, fmt.Errorf("error starting forgejo container: %w", err)
 	}
 
 	forgejoContainer = &ForgejoContainer{c: c}
