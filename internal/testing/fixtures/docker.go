@@ -5,13 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 
 	"github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
@@ -225,9 +225,6 @@ func getForgejoContainer(ctx context.Context) (*ForgejoContainer, error) {
 
 	containerName := "forgejo"
 
-	_, f, _, _ := runtime.Caller(0)
-	appIniFile := filepath.Join(filepath.Dir(f), "app.ini")
-
 	containerRequest := testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			Name:     containerName,
@@ -235,22 +232,27 @@ func getForgejoContainer(ctx context.Context) (*ForgejoContainer, error) {
 			ConfigModifier: func(config *container.Config) {
 				config.Hostname = containerName
 			},
-			HostConfigModifier: func(hostConfig *container.HostConfig) {
-				hostConfig.Mounts = append(hostConfig.Mounts, mount.Mount{
-					Type:     mount.TypeBind,
-					Source:   appIniFile,
-					Target:   "/data/gitea/conf/app.ini",
-					ReadOnly: true,
-				})
-			},
 		},
 		Reuse: true,
 	}
+
+	_, f, _, _ := runtime.Caller(0)
+	appIniFile := filepath.Join(filepath.Dir(f), "app.ini")
+	// appIniRd, err := os.Open(appIniFile)
+	// if err != nil {
+	//     return nil, err
+	// }
 
 	c, err := testcontainers.Run(
 		ctx,
 		"codeberg.org/forgejo/forgejo:11",
 		testcontainers.CustomizeRequest(containerRequest),
+		testcontainers.WithFiles(testcontainers.ContainerFile{
+			// Reader: appIniRd,
+			HostFilePath: appIniFile,
+			ContainerFilePath:   "/data/gitea/conf/app.ini",
+			FileMode: 0o644,
+		}),
 		testcontainers.WithWaitStrategy(
 			wait.ForLog("Starting new Web server"),
 		),
